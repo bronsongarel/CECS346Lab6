@@ -14,9 +14,12 @@
 #include "tm4c123gh6pm.h"
 #include <stdint.h> // C99 data types
 
-// 1. Pre-processor Directives Section
-// Constant declarations to access port registers using 
-// symbolic names instead of addresses
+
+//------------------------------------------------------------------------------------------------------------
+//
+// Constant Declarations
+//
+//------------------------------------------------------------------------------------------------------------
 
 // TODO: define bit addresses for the three LEDs connected to PORTF  DONE
 #define LED        (*((volatile uint32_t *)0x40025038)) //adds 0x0038 to base for bits PF1-3
@@ -30,19 +33,24 @@
 #define SW2_MASK  0x01  //PF0 bit position
 
 // TODO: define constants used in this project. DONE
-#define HALF_S 			 8000000U    // Assume the system clock is 16MHz.
-					     // define number of clock cycles to generate 0.5s time interval.
-                                             // A U follows a constant indicate this is an unsigned number
-					     //Calculation: 16MHz * 0.5s = 8,000,000 ticks
-#define NVIC_EN0_PORTF		  0xE000100  // bit position for PORTF interrupt in NVIC_EN0_R register.
-															
+#define HALF_S 			 8000000U    				// Assume the system clock is 16MHz.
+																				// define number of clock cycles to generate 0.5s time interval.
+																				// A U follows a constant indicate this is an unsigned number
+																				//Calculation: 16MHz * 0.5s = 8,000,000 ticks
+#define NVIC_EN0_PORTF		  0xE000100  	// bit position for PORTF interrupt in NVIC_EN0_R register.
+
+
+//------------------------------------------------------------------------------------------------------------
+//
+// Function Prototypes
+//
+//------------------------------------------------------------------------------------------------------------
 
 // Function Prototypes (external functions from startup.s)
 extern void DisableInterrupts(void); // Disable interrupts
 extern void EnableInterrupts(void);  // Enable interrupts
 extern void WaitForInterrupt(void);  // Go to low power mode while waiting for the next interrupt
 
-// Function Prototypes
 // Initialize rising edge triggered interrupt for PF0 (SW2) and three LEDs on Port F
 void Switch_LED_Init(void);  
 
@@ -61,6 +69,13 @@ volatile uint32_t RisingEdges = 0;
 // keep track of the current active LED
 volatile uint8_t curr_led = RED;
 
+
+//------------------------------------------------------------------------------------------------------------
+//
+// Main
+//
+//------------------------------------------------------------------------------------------------------------
+
 int main(void){
 	DisableInterrupts();
   Switch_LED_Init();
@@ -77,34 +92,40 @@ int main(void){
 }
 
 
+//------------------------------------------------------------------------------------------------------------
+//
+// Function Definitions
+//
+//------------------------------------------------------------------------------------------------------------
+
 // TODO: Initialize rising edge triggered interrupt for PF0 (SW2) and three LEDs on Port F  DONE
 void Switch_LED_Init(void) {
   //onboard LEDS PF1-3         3 = green, 2 = blue, 1 = red
   SYSCTL_RCGC2_R      |= 0x00000020;    //activates port F clock
   while ((SYSCTL_RCGCGPIO_R & 0x00000020) != 0x00000020) {} //wait for clock to be ready
 
-  RisingEdges = 0;		        //initilize counter 
-  GPIO_PORTF_LOCK_R    =  0x4C4F434B;	//Unlock PF0 (SW2)
-  GPIO_PORTF_CR_R     |=  0x0F;         //allow changes on PF0-3: 
-  GPIO_PORTF_AMSEL_R   = ~0x0F;         //disable analog function on PF0-3	
-  GPIO_PORTF_PCTL_R   &= ~0x0000FFFF;   //GPIO clear bit PCTL
-  GPIO_PORTF_DIR_R    |=  0x0E;         //make PF1-3 out (built-in LEDs)
-  GPIO_PORTF_DIR_R    &=  0x01;         //make PF0 in (SW2)	
-  GPIO_PORTF_AFSEL_R  &= ~0x0F;         //disable alt funct on PF0-3
-  GPIO_PORTF_DEN_R    |=  0x0F;         //enable digital I/O on PF0-3  
-  GPIO_PORTF_IS_R     &= ~0x01;		//PF0 is edge sensitive
-  GPIO_PORTF_IBE_R    &= ~0x01;		//PF0 is not both edges
-  GPIO_PORTF_IEV_R    |=  0x01;  	//PF0 rising edge event
-  GPIO_PORTF_ICR_R    |=  0x01;         //clear flag on PF0
-  GPIO_PORTF_IM_R     |=  0x01;         //arm interrupt on PF0
+  RisingEdges = 0;		        													//initilize counter 
+  GPIO_PORTF_LOCK_R    =  0x4C4F434B;										//Unlock PF0 (SW2)
+  GPIO_PORTF_CR_R     |=  0x0F;         								//allow changes on PF0-3: 
+  GPIO_PORTF_AMSEL_R   = ~0x0F;         								//disable analog function on PF0-3	
+  GPIO_PORTF_PCTL_R   &= ~0x0000FFFF;   								//GPIO clear bit PCTL
+  GPIO_PORTF_DIR_R    |=  0x0E;         								//make PF1-3 out (built-in LEDs)
+  GPIO_PORTF_DIR_R    &=  0x01;         								//make PF0 in (SW2)	
+  GPIO_PORTF_AFSEL_R  &= ~0x0F;         								//disable alt funct on PF0-3
+  GPIO_PORTF_DEN_R    |=  0x0F;         								//enable digital I/O on PF0-3  
+  GPIO_PORTF_IS_R     &= ~0x01;													//PF0 is edge sensitive
+  GPIO_PORTF_IBE_R    &= ~0x01;													//PF0 is not both edges
+  GPIO_PORTF_IEV_R    |=  0x01;  												//PF0 rising edge event
+  GPIO_PORTF_ICR_R    |=  0x01;         								//clear flag on PF0
+  GPIO_PORTF_IM_R     |=  0x01;         								//arm interrupt on PF0
   NVIC_PRI7_R = (NVIC_PRI7_R&0xFF1FFFFF) | 0x00800000;  //priority gate 4,																					//clear bits 23-21 in NVIC_PRI7_R
-		                                        //priority 4 = set top 3 bits of 23-16 to 4 hex:100																											//00800000 = 100 hex in bits 23-16
-  NVIC_EN0_R = 0x40000000;			        //enable interrupt 30 in NVIC		
+																												//priority 4 = set top 3 bits of 23-16 to 4 hex:100					//00800000 = 100 hex in bits 23-16
+  NVIC_EN0_R = 0x40000000;			        								//enable interrupt 30 in NVIC		
 
   
 }
 
-// TODO: Initialize SysTick timer with interrupt enabled.
+// TODO: Initialize SysTick timer with interrupt enabled.	DONE
 // Parameter "period" specifies number of counts for the time 
 void SysTick_Init(uint32_t period) {
 	NVIC_ST_CTRL_R = 0;
@@ -118,17 +139,16 @@ void SysTick_Init(uint32_t period) {
 // TODO: ISR that Handles GPIO Port F interrupts.     DONE
 // When Port F interrupt triggers, do what's necessary then increment global variable RisingEdges
 void GPIOPortF_Handler(void) {
-	for (uint32_t i=0;i<160000;i++) {} // simple solution to take care of button debounce: 20ms to 30ms delay
-	if (GPIO_PORTF_RIS_R & SW2_MASK) {	   //RIS = 1 when an interrupt condition has occurred 	
-		GPIO_PORTF_ICR_R |= SW2_MASK;      // acknowledge flag0: 00000001 for switch 1
+	for (uint32_t i=0;i<160000;i++) {} 			// simple solution to take care of button debounce: 20ms to 30ms delay
+	if (GPIO_PORTF_RIS_R & SW2_MASK) {	   	//RIS = 1 when an interrupt condition has occurred 	
+		GPIO_PORTF_ICR_R |= SW2_MASK;      		// acknowledge flag0: 00000001 for switch 1
 		RisingEdges = RisingEdges + 1;
 	}
 }
-// TODO: ISR that Handles SysTick generated interrupts. 
+// TODO: ISR that Handles SysTick generated interrupts. 	DONE
 // When timer interrupt triggers, do what's necessary then toggle the current LED
 void SysTick_Handler(void) {
 	// Flash Currently Selected LED
 	uint8_t curr = curr_led;
 	curr_led ^= curr;
-	
 }

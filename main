@@ -1,7 +1,15 @@
-// Lab6_Interrupts.c
-// Starter file for CECS346 Lab 6
-// By Dr. Min He
-// 3/14/2024
+// Documentation Section
+// CECS346Lab6.c
+// Course number: CECS 346
+// Assignment: Lab 6
+// Project Group #10
+// Team Members: Jose Ambriz, Bronson Garel, Jonathan Kim, Dylan Ong, Kyle Wyckoff
+// Date: 10/18/2024
+// System Requirements: 
+// 	?
+
+// Hardware design information:
+//	?
 
 #include "tm4c123gh6pm.h"
 #include <stdint.h> // C99 data types
@@ -99,6 +107,12 @@ void Switch_LED_Init(void) {
 // TODO: Initialize SysTick timer with interrupt enabled.
 // Parameter "period" specifies number of counts for the time 
 void SysTick_Init(uint32_t period) {
+	NVIC_ST_CTRL_R = 0;
+	NVIC_ST_RELOAD_R = HALF_S - 1;
+	NVIC_ST_CURRENT_R = 0;
+	NVIC_SYS_PRI3_R = (NVIC_SYS_PRI3_R&0x00FFFFFF) | 0x40000000;
+	NVIC_ST_CTRL_R = 0x07;
+	EnableInterrupts();
 }
 
 // TODO: ISR that Handles GPIO Port F interrupts.     DONE
@@ -113,4 +127,8 @@ void GPIOPortF_Handler(void) {
 // TODO: ISR that Handles SysTick generated interrupts. 
 // When timer interrupt triggers, do what's necessary then toggle the current LED
 void SysTick_Handler(void) {
+	// Flash Currently Selected LED
+	uint8_t curr = curr_led;
+	curr_led ^= curr;
+	
 }

@@ -5,11 +5,6 @@
 // Project Group #10
 // Team Members: Jose Ambriz, Bronson Garel, Jonathan Kim, Dylan Ong, Kyle Wyckoff
 // Date: 10/18/2024
-// System Requirements: 
-// 	?
-
-// Hardware design information:
-//	?
 
 #include "tm4c123gh6pm.h"
 #include <stdint.h> // C99 data types
@@ -144,14 +139,16 @@ void GPIOPortF_Handler(void) {
 	for (uint32_t i=0;i<160000;i++) {} 			// simple solution to take care of button debounce: 20ms to 30ms delay
 	if (GPIO_PORTF_RIS_R & SW2_MASK) {	   	//RIS = 1 when an interrupt condition has occurred 	
 		GPIO_PORTF_ICR_R |= SW2_MASK;      		// acknowledge flag0: 00000001 for switch 1
-		if (LED != GREEN){										// If LED is NOT Green:
-			curr_led = LED << 1;								// 
+		if (curr_led != GREEN){								// If LED is NOT Green:
+			curr_led <<= 1;
+			//curr_led = (LED << 1);							// 
 			LED = curr_led;
 		}
 		else {
 			LED = RED;
 			curr_led = LED;
 		}
+		
 	}
 }
 // TODO: ISR that Handles SysTick generated interrupts. 	DONE
